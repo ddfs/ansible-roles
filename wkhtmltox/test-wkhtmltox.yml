@@ -1,0 +1,6 @@
+---
+- hosts: wkhtmltox
+  roles:
+  - role: wkhtmltox
+    wkhtmltox_package_type: "dpkg"
+    wkhtmltox_force_purge: false
