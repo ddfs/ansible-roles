@@ -1,0 +1,29 @@
+---
+#
+# wkhtmltox package options
+# see:
+#  https://wkhtmltopdf.org/downloads.html
+#  https://github.com/wkhtmltopdf/wkhtmltopdf/releases
+#
+wkhtmltox_exec: "wkhtmltopdf" # wkhtmltopdf|wkhtmltoimage
+
+wkhtmltox_package_type: "dpkg" # deb|tgz
+wkhtmltox_force_purge: false
+
+#
+# dpkg options
+#
+wkhtmltox_dpkg_name: "wkhtmltox"
+wkhtmltox_dpkg_version: "0.12.5"
+wkhtmltox_dpkg_url: "https://downloads.wkhtmltopdf.org/0.12/0.12.5/wkhtmltox_0.12.5-1.stretch_amd64.deb"
+wkhtmltox_dpkg_dst: "/tmp/wkhtmltox-{{ wkhtmltox_dpkg_version }}.deb"
+
+
+#
+# tar options
+#
+wkhtmltox_tgz_name: "wkhtmltox"
+wkhtmltox_tgz_version: "0.12.0"
+wkhtmltox_tgz_url: "https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.0/wkhtmltox-linux-amd64_0.12.0-03c001d.tar.xz"
+wkhtmltox_tgz_dst: "/tmp/wkhtmltox-{{ wkhtmltox_tgz_version }}.tar.xz"
+wkhtmltox_tgz_dir: "/opt/{{ wkhtmltox_tgz_name }}"

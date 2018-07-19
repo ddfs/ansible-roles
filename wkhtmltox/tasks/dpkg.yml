@@ -1,0 +1,82 @@
+---
+- name: compare version with current one
+  set_fact:
+    __app_install: "{% if __app_current is failed %}False{% elif __app_current.stdout == 'Install' %}True{% else %}{{ __app_current.stdout is version(wkhtmltox_dpkg_version, '<', strict=True) }}{% endif %}"
+
+- set_fact:
+    __app_install: true
+  when: wkhtmltox_force_purge
+
+- name: install dependency packages...
+  package:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+  with_items: "{{ wkhtmltopdf_dependencies[ansible_distribution] }}"
+  when: __app_install
+
+- name: download wkhtmltox package
+  get_url:
+    url: "{{ wkhtmltox_dpkg_url }}"
+    dest: "{{ wkhtmltox_dpkg_dst }}"
+  when: __app_install
+
+- name: apply file permissions
+  file:
+    dest: "{{ wkhtmltox_dpkg_dst }}"
+    owner: root
+    group: root
+    mode: 0700
+  when: __app_install
+
+- name: purge current installation packages (apt)...
+  apt:
+    name: "{{ wkhtmltox_dpkg_name }}"
+    state: absent
+    update_cache: yes
+    cache_valid_time: 3600
+    purge: yes
+  when: __app_install
+
+- name: purge current installation packages (dpkg)...
+  shell: >
+    dpkg --purge {{ wkhtmltox_dpkg_name }}
+  when: __app_install
+
+- name: purge current installation packages (tar)
+  file:
+    dest: "{{ wkhtmltox_tgz_dir }}"
+    state: absent
+  when: __app_install
+
+- name: fetch dependencies from .deb
+  register: __app_depends
+  shell: >
+    dpkg -I {{ wkhtmltox_dpkg_dst }} | grep Depends | sed -e "s/Depends\://" | sed -e 's/,//g' | sed 's/^ *//;s/ *$//'
+  when: __app_install
+
+- name: install app dependencies
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+  with_items: "{{ __app_depends.stdout.split(' ') | list }}"
+  when: __app_install and __app_depends
+
+- name: install using dpkg
+  shell: >
+    dpkg --install {{ wkhtmltox_dpkg_dst }}
+  when: __app_install and __app_depends
+
+- name: clean-up
+  file:
+    dest: "{{ wkhtmltox_dpkg_dst }}"
+    state: absent
+
+- shell: "echo {{ item }}"
+  register: echo
+  with_items:
+    - "wkhtmltopdf version is {% if __app_current %}{{ __app_current.stdout }}{% else %}{{ wkhtmltox_dpkg_version }}{% endif %}"
+  changed_when: false

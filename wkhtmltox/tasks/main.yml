@@ -1,0 +1,25 @@
+---
+- name: include os based configuration
+  include_vars: "os/{{ ansible_os_family }}.yml"
+
+- name: determine executable path
+  command: which wkhtmltopdf
+  register: __app_exec
+  changed_when: false
+  failed_when: false
+
+- set_fact:
+    wkhtmltox_exec: "{{ __app_exec.stdout }}"
+  when: __app_exec.rc == 0
+
+- name: check current installation
+  register: __app_current
+  shell: >
+    [ -x {{ wkhtmltox_exec }} ] && {{ wkhtmltox_exec }} --version | head -2 | tail -1 | awk '/ / { print $2 }' | sed -e 's/\"//g' || echo 'Install'
+  changed_when: false
+
+- include_tasks: dpkg.yml
+  when: wkhtmltox_package_type == 'dpkg'
+
+- include_tasks: tar.yml
+  when: wkhtmltox_package_type == 'tar'
