@@ -1,0 +1,19 @@
+---
+#
+# version
+#
+nodejs_version: "10.x"
+
+# apt repository script
+nodejs_setup_script_url: "https://deb.nodesource.com/setup_{{ nodejs_version }}"
+nodejs_setup_script_dst: "/tmp/nodejs-setup_{{ nodejs_version }}"
+
+# executable
+nodejs_exec: "/usr/bin/node"
+
+# dump version
+nodejs_exec_version: "{{ nodejs_exec }} --version | sed -e 's/[a-zA-Z]//g'"
+
+# npm packages
+nodejs_npm_packages: []
+  # - {name: less, global: yes, state: latest, version: latest}

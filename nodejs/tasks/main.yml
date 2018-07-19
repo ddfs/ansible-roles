@@ -1,0 +1,65 @@
+---
+- name: include os based configuration
+  include_vars: "os/{{ ansible_os_family }}.yml"
+
+- name: install dependency packages...
+  package: 
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+  with_items: "{{ nodejs_dependencies[ansible_distribution] }}"
+
+- name: download repository script
+  get_url:
+    url: "{{ nodejs_setup_script_url }}"
+    dest: "{{ nodejs_setup_script_dst }}"
+
+- name: apply file permissions
+  file:
+    dest: "{{ nodejs_setup_script_dst }}"
+    owner: root
+    group: root
+    mode: 0700
+
+- name: execute repository script
+  shell: >
+    bash {{ nodejs_setup_script_dst }}
+
+- name: delete repository script
+  file:
+    path: "{{ nodejs_setup_script_dst }}"
+    state: absent
+
+- name: install nodejs {{ nodejs_version }}
+  package:
+    name: "{{ nodejs_package }}"
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+  with_items: "{{ nodejs_packages }}"
+  loop_control:
+      loop_var: nodejs_package
+
+- name: install npm packages
+  npm:
+      global: "{{ nodejs_npm_package.global | default('yes') }}"
+      production: "{{ nodejs_npm_package.production | default('no') }}"
+      version: "{{ nodejs_npm_package.version | default('latest') }}"
+      state: "{{ nodejs_npm_package.state }}"
+      name: "{{ nodejs_npm_package.name }}"
+  with_items: "{{ nodejs_npm_packages }}"
+  loop_control:
+      loop_var: nodejs_npm_package
+
+- name: check current version
+  register: __app_current
+  shell: >
+    [ -x {{ nodejs_exec }} ] && {{ nodejs_exec_version }}
+  changed_when: false
+
+- shell: "echo {{ item }}"
+  register: echo
+  with_items:
+    - "Node version is {{ __app_current.stdout }}"
+  changed_when: false

@@ -1,0 +1,7 @@
+nodejs_packages:
+  - nodejs
+
+nodejs_dependencies:
+  Debian:
+  - dirmngr
+  - software-properties-common
