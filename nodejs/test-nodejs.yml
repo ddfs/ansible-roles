@@ -1,0 +1,7 @@
+---
+- hosts: nodejs
+  roles:
+  - role: nodejs
+    nodejs_version: '10.x'
+    nodejs_npm_packages:
+      - {name: less, global: yes, state: latest}
