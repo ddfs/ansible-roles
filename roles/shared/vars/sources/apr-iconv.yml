@@ -1,0 +1,14 @@
+---
+source_apr_iconv_name: "apr-iconv"
+# source_apr_iconv_version: "1.2.2" # must be defined in role
+
+source_apr_iconv_name_full: "{{ source_apr_iconv_name }}-{{ source_apr_iconv_version }}"
+source_apr_iconv_name_tar: "{{ source_apr_iconv_name_full }}.tar.gz"
+
+source_apr_iconv_src: "http://www-eu.apache.org/dist/apr/{{ source_apr_iconv_name_tar }}"
+source_apr_iconv_tgz: "/tmp/{{ source_apr_iconv_name_tar }}"
+source_apr_iconv_dir: "/tmp/{{ source_apr_iconv_name }}"
+
+target_apr_iconv_dir: "/opt/{{ source_apr_iconv_name }}"
+target_apr_iconv_exec: "{{ target_apr_iconv_dir }}/bin/apriconv"
+target_apr_iconv_exec_version: "{{ target_apr_iconv_exec }} -v"

@@ -1,0 +1,11 @@
+---
+apr_iconv_dependencies:
+  Debian:
+  # essentials
+  - aptitude
+  - autoconf
+  - automake
+  - autotools-dev
+  - build-essential
+  - libtool
+  - libtool-bin

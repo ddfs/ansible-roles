@@ -1,0 +1,14 @@
+---
+source_nginx_name: "nginx"
+# source_nginx_version: "1.15.0" # must be defined in role
+
+source_nginx_name_full: "{{ source_nginx_name }}-{{ source_nginx_version }}"
+source_nginx_name_tar: "{{ source_nginx_name_full }}.tar.gz"
+
+source_nginx_src: "http://nginx.org/download/{{ source_nginx_name_tar }}"
+source_nginx_tgz: "/tmp/{{ source_nginx_name_tar }}"
+source_nginx_dir: "/tmp/{{ source_nginx_name }}"
+
+target_nginx_dir: "/opt/{{ source_nginx_name }}"
+target_nginx_exec: "{{ target_nginx_dir }}/sbin/nginx"
+target_nginx_exec_version: "{{ target_nginx_exec }} -v"

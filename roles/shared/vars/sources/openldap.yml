@@ -1,0 +1,14 @@
+---
+source_openldap_name: "openldap"
+# source_openldap_version: "2.4.46" # must be defined in role
+
+source_openldap_name_full: "{{ source_openldap_name }}-{{ source_openldap_version }}"
+source_openldap_name_tar: "OPENLDAP_REL_ENG_2_4_46.tar.gz"
+
+source_openldap_src: "https://github.com/openldap/openldap/archive/{{ source_openldap_name_tar }}"
+source_openldap_tgz: "/tmp/{{ source_openldap_name_tar }}"
+source_openldap_dir: "/tmp/{{ source_openldap_name }}"
+
+target_openldap_dir: "/opt/{{ source_openldap_name }}"
+target_openldap_exec: "{{ target_openldap_dir }}/bin/openldap"
+target_openldap_exec_version: "{{ target_openldap_exec }} -v"

@@ -1,0 +1,3 @@
+---
+# force compile (testing only)
+apr_force_compile: False

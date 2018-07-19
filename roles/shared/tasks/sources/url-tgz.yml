@@ -1,0 +1,58 @@
+---
+#
+# Download source files packaged as tarballs from given urls.
+#
+# - include_vars:
+#     file: roles/teknober/vars/sources/package.yml
+#
+# - include: roles/teknober/tasks/sources/url-tgz.yml
+#   vars:
+#     source: name
+#     source_src: "{{ source_name_src }}"
+#     source_tgz: "{{ source_name_tgz }}"
+#     source_dir: "{{ source_name_dir }}"
+#
+
+- name: delete {{ source }} source directory
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ source_dir }}"
+  become: yes
+
+- name: create {{ source }} source directory
+  file:
+    path: "{{ item }}"
+    mode: 0755
+    state: directory
+  with_items:
+    - "{{ source_dir }}"
+
+- name: download {{ source }} source package
+  get_url:
+    url: "{{ source_src }}"
+    dest: "{{ source_tgz }}"
+
+- name: unpack {{ source }} source package
+  unarchive:
+    src: "{{ source_tgz }}"
+    dest: "{{ source_dir }}"
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+
+- name: fix permissions for {{ source }} source files
+  file:
+    dest: "{{ source_dir }}"
+    owner: root
+    group: root
+    recurse: yes
+  become: yes
+
+- name: delete {{ source }} source package
+  file:
+    path: "{{ source_tgz }}"
+    state: absent
+  with_items:
+    - "{{ source_dir }}"
+  become: yes

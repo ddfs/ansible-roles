@@ -1,0 +1,105 @@
+---
+- include_vars: roles/shared/vars/sources/apr.yml
+- include_vars: roles/shared/vars/sources/apr-util.yml
+
+- name: include os based configuration
+  include_vars: "os/{{ ansible_os_family }}.yml"
+
+- name: check current installation
+  register: __app_current
+  shell: >
+    [ -x {{ target_apr_util_exec }} ] && {{ target_apr_util_exec_version }} 2>&1 | sed 's/[a-zA-Z\-\:_/\(\)]*[[:space:]]*//g' | sed 's/^ *//;s/ *$//' || echo 'Install'
+  changed_when: false
+
+- name: compare version with current one
+  set_fact:
+    __app_install: "{% if __app_current is failed %}False{% elif __app_current.stdout == 'Install' %}True{% else %}False{% endif %}"
+    __app_upgrade: "{% if __app_current is failed %}False{% elif __app_current.stdout == 'Install' %}False{% else %}{{ __app_current.stdout is version(source_apr_util_version, '<', strict=True) }}{% endif %}"
+
+- name: force compile = {{ apr_util_force_compile }}
+  set_fact:
+    __app_install: True
+    __app_upgrade: True
+  when: apr_util_force_compile
+
+- name: install dependency packages...
+  package:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+  with_items: "{{ apr_util_dependencies[ansible_distribution] }}"
+  when: __app_install or __app_upgrade
+
+# apr
+- include_tasks: roles/shared/tasks/sources/url-tgz.yml
+  vars:
+    source: "{{ source_apr_name }}"
+    source_src: "{{ source_apr_src }}"
+    source_tgz: "{{ source_apr_tgz }}"
+    source_dir: "{{ source_apr_dir }}"
+  when: __app_install or __app_upgrade
+
+# apr-util
+- include_tasks: roles/shared/tasks/sources/url-tgz.yml
+  vars:
+    source: "{{ source_apr_util_name }}"
+    source_src: "{{ source_apr_util_src }}"
+    source_tgz: "{{ source_apr_util_tgz }}"
+    source_dir: "{{ source_apr_util_dir }}"
+  when: __app_install or __app_upgrade
+
+- name:  buildconf
+  command: >
+    ./buildconf \
+      --with-apr="{{ source_apr_dir }}"
+  args:
+    chdir: "{{ source_apr_util_dir }}"
+  when: __app_install or __app_upgrade
+
+- name: configure
+  command: >
+    ./configure \
+      --prefix="{{ target_apr_util_dir }}" \
+      --exec-prefix="{{ target_apr_util_dir }}" \
+      --with-apr="{{ target_apr_exec }}" \
+      --with-apr-iconv="{{ target_apr_iconv_exec }}" \
+      --with-expat=/usr/lib \
+      --with-crypto \
+      --with-berkeley-db \
+      --with-openssl=/usr/include \
+      --with-sqlite3=/usr/include \
+      --with-ldap-include=/usr/include \
+      --with-mysql=/usr/include/mysql \
+      --with-pgsql=/usr/include/postgresql \
+      --with-iconv="{{ target_apr_iconv_dir }}"
+  args:
+    chdir: "{{ source_apr_util_dir }}"
+  when: __app_install or __app_upgrade
+
+- name: compile
+  make:
+    chdir: "{{ source_apr_util_dir }}"
+  when: __app_install or __app_upgrade
+
+- name: install
+  make:
+    chdir: "{{ source_apr_util_dir }}"
+    target: install
+  when: __app_install or __app_upgrade
+
+- name: clean-up
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ source_apr_dir }}"
+    - "{{ source_apr_util_dir }}"
+
+- shell: "echo {{ item }}"
+  register: echo
+  with_items:
+    - "{{ target_apr_exec }} version is {{ source_apr_version }}"
+    - "{{ target_apr_iconv_exec }} version is {{ source_apr_iconv_version }}"
+    - "{{ target_apr_util_exec }} version is {{ source_apr_util_version }}"
+  changed_when: false

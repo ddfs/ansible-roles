@@ -1,0 +1,14 @@
+---
+source_apr_util_name: "apr-util"
+# source_apr_util_version: "1.6.1" # must be defined in role
+
+source_apr_util_name_full: "{{ source_apr_util_name }}-{{ source_apr_util_version }}"
+source_apr_util_name_tar: "{{ source_apr_util_name_full }}.tar.gz"
+
+source_apr_util_src: "http://www-eu.apache.org/dist/apr/{{ source_apr_util_name_tar }}"
+source_apr_util_tgz: "/tmp/{{ source_apr_util_name_tar }}"
+source_apr_util_dir: "/tmp/{{ source_apr_util_name }}"
+
+target_apr_util_dir: "/opt/{{ source_apr_util_name }}"
+target_apr_util_exec: "{{ target_apr_util_dir }}/bin/apu-1-config"
+target_apr_util_exec_version: "{{ target_apr_util_exec }} --version"
