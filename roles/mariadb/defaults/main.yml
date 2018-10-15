@@ -1,0 +1,161 @@
+---
+#
+# mariadb
+#
+mariadb_version: '10.2'
+
+#
+# root
+#
+mariadb_root_user: 'root'
+mariadb_root_password: 'root'
+
+#
+# users
+#
+mariadb_users:
+  login: {}
+  # - name: test_01
+  #   password: test_01
+
+  replication: {}
+  # - name: test_02
+  #   password: test_02
+  #   state: absent
+
+  # - name: test_01
+  #   password: test_01
+  #   master: true
+
+#
+# databases
+#
+mariadb_databases: {}
+  # - name: test_01
+  #   state: absent
+
+  # - name: test_01
+  #   replicate: no
+  #   init_script: files/test_01-init.sql
+  #   state: present
+
+  # - name: test_02
+  #   replicate: no
+  #   init_script: files/test_01-init.sql
+  #   state: present
+
+  # - name: test_02
+  #   state: absent
+
+#
+# connections
+#
+mariadb_host: "127.0.0.1"
+mariadb_port: 3306
+mariadb_socket: "/var/run/mysqld/mysqld.sock"
+
+#
+# replication
+#
+mariadb_server_id: 1 # auto-generated, default: 1
+mariadb_replication_role: "none" # none|master|slave
+mariadb_replication_master: hostname
+mariadb_replication_master_ip: "{{ groups[mariadb_replication_master][0] }}"
+mariadb_replication_master_port: 3306
+
+#
+# tweaks
+#
+mariadb_swappiness: 0
+
+#
+# Configuration parameters can be applied multiple times. see documentation if you need to add more keys
+# use `mariadb_configuration_multiple_params` for extra params to merge on defaults
+mariadb_configuration_multiple_params: []
+mariadb_configuration_multiple_params_defaults: ["binlog_do_db", "binlog_ignore_db"]
+
+#
+# Configuration defaults
+#
+# use: `mariadb_configuration` for extra configuration variables to merge on defaults
+mariadb_configuration: {}
+mariadb_configuration_defaults:
+  client:
+    host: "{{ mariadb_host }}"
+    port: "{{ mariadb_port }}"
+    socket: "{{ mariadb_socket }}"
+
+  mysql:
+    no-auto-rehash:
+
+  mysqld: # https://mariadb.com/kb/en/library/server-system-variables
+    server_id: "{{ mariadb_server_id }}" # auto-generated
+    bind_address: "0.0.0.0" # allow from all interfaces
+    socket: "{{ mariadb_socket }}"
+    port: "{{ mariadb_port }}"
+    # host_cache_size: 0
+
+    # Connections
+    # max_connections: 1024
+    # max_user_connections: 0
+
+    # Packages
+    # max_allowed_packet: 128M
+
+    # Cache :: Query
+    # query_cache_size: 32M
+    # query_cache_limit: 1M
+
+    # Engine
+    # default-storage-engine: innodb
+
+    # Engine :: InnoDB
+    # innodb_page_size: 32768
+    # innodb_thread_concurrency: 2 # Num CPUs * 2
+
+    # Timeout
+    # wait_timeout: 90
+
+    # Logging: error
+    # log-error: "/var/log/mysql/mariadb-error.log"
+
+    # Logging: general
+    # general_log: 1
+    # general_log_file: "/var/log/mysql/mariadb-general.log"
+
+    # Logging: slow queries
+    # slow_query_log: 1
+    # slow_query_log_file: "/var/log/mysql/mariadb-slow-query.log"
+    # long_query_time: 3
+    # log_queries_not_using_indexes:
+
+    # Replication: master
+    # log_basename: master
+    # binlog_format: row
+    # log_bin: /var/log/mysql/mariadb-bin.log
+    # log_bin_index: /var/log/mysql/mariadb-bin.index
+
+    # binlog_do_db: [
+    #   "test", "test12", "test3"
+    # ]
+
+    # binlog_ignore_db: [
+    #   "dbname1", "dbname2"
+    # ]
+
+    # Replication: slave
+    # read_only:
+    # relay-log: /var/log/mysql/mariadb-relay-bin
+    # relay-log-index: /var/log/mysql/mariadb-relay-bin.index
+
+  mysqld_safe:
+    port: "{{ mariadb_port }}"
+    nice: 0
+
+  mysqldump:
+    quick:
+    quote-names:
+    max_allowed_packet: 128M
+
+  mysqlhotcopy:
+    interactive-timeout:

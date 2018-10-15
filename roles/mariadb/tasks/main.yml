@@ -1,0 +1,12 @@
+---
+- name: include os specific variables
+  include_vars: "os/{{ ansible_os_family }}.yml"
+
+- include_tasks: dependencies.yml
+- include_tasks: configure-pre.yml
+- include_tasks: install.yml
+- include_tasks: configure-post.yml
+- include_tasks: root.yml
+- include_tasks: databases.yml
+- include_tasks: users.yml
+- include_tasks: replication.yml

@@ -1,0 +1,83 @@
+---
+- name: master - manage replication users
+  mysql_user:
+    name:     "{{ db_user_repl.name }}"
+    password: "{{ db_user_repl.password|default('password') }}"
+    host:     "{{ db_user_repl.host|default('%') }}"
+    priv:     "{{ db_user_repl.priv|default('*.*:REPLICATION SLAVE') }}"
+    state:    "{{ db_user_repl.state|default('present') }}"
+    login_user: "{{ mariadb_root_user }}"
+    login_password: "{{ mariadb_root_password }}"
+  with_items: "{{ mariadb_users.replication }}"
+  loop_control:
+      loop_var: db_user_repl
+  when: mariadb_replication_role == 'master'
+
+- name: flush previligies
+  shell: mysqladmin flush-privileges --user={{ mariadb_root_user }} --password={{ mariadb_root_password }}
+  when: mariadb_replication_role == 'master'
+
+- name: slave - fetch replication master user
+  set_fact:
+    repl_master_user: "{{ mariadb_users.replication | json_query('[?master==`true`]') }}"
+  when: mariadb_replication_role == 'slave' and mariadb_replication_master is defined
+
+- name: slave - get replication master status
+  mysql_replication:
+    mode: getmaster
+  delegate_to: "{{ mariadb_replication_master_ip }}"
+  register: replication_master_status
+  when: mariadb_replication_role == 'slave' and mariadb_replication_master is defined
+
+- name: slave - get replication slave status
+  mysql_replication:
+    mode: getslave
+  register: replication_slave_status
+  when: mariadb_replication_role == 'slave'
+
+# - debug: msg="{{ repl_master_user }}"
+#   when: mariadb_replication_role == 'slave'
+
+# - debug: msg="{{ replication_master_status }}"
+#   when: mariadb_replication_role == 'slave'
+  
+# - debug: msg="{{ replication_slave_status }}"
+#   when: mariadb_replication_role == 'slave'
+
+- name: stop slave on change master [repair]
+  shell: mysql --user={{ mariadb_root_user }} --password={{ mariadb_root_password }} -e "STOP SLAVE;"
+  when: mariadb_replication_role == 'slave' and mariadb_replication_master is defined and repl_master_user is defined and replication_slave_status.Is_Slave == true and replication_slave_status.Slave_IO_Running == 'Connecting'
+
+- name: change master server
+  mysql_replication:
+    mode: changemaster
+    master_host: "{{ mariadb_replication_master_ip }}"
+    master_port: "{{ mariadb_replication_master_port }}"
+    master_log_file: "{{ replication_master_status.File }}"
+    master_log_pos: "{{ replication_master_status.Position }}"
+    master_user: "{{ repl_master_user[0].name }}"
+    master_password: "{{ repl_master_user[0].password }}"
+  when: mariadb_replication_role == 'slave' and mariadb_replication_master is defined and repl_master_user is defined and (replication_slave_status.Is_Slave == false or replication_slave_status.Slave_IO_Running == 'Connecting')
+
+- name: start slave on change master [repair]
+  shell: mysql --user={{ mariadb_root_user }} --password={{ mariadb_root_password }} -e "START SLAVE;"
+  when: mariadb_replication_role == 'slave' and mariadb_replication_master is defined and repl_master_user is defined and replication_slave_status.Is_Slave == true and replication_slave_status.Slave_IO_Running == 'Connecting'
+
+- name: wait for connection to master
+  wait_for: timeout=3
+  when: mariadb_replication_role == 'slave'
+
+- name: slave - test replication slave status
+  mysql_replication:
+    mode: getslave
+  register: replication_slave_status_confirm
+  when: mariadb_replication_role == 'slave'
+
+# - debug: msg="{{ replication_slave_status_confirm }}"
+#   when: mariadb_replication_role == 'slave'
+
+- name: set skip slave counter
+  shell: mysql --user={{ mariadb_root_user }} --password={{ mariadb_root_password }} -e "STOP SLAVE; SET GLOBAL SQL_SLAVE_SKIP_COUNTER = 1; START SLAVE;"
+  when: mariadb_replication_role == 'slave' and mariadb_replication_master is defined and (replication_slave_status_confirm.Slave_IO_Running == 'No' or replication_slave_status_confirm.Slave_SQL_Running == 'No')
+
+# SET @@default_master_connection = '{{ mariadb_replication_master_ip }}';

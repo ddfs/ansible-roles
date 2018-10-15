@@ -1,0 +1,28 @@
+---
+- name: add/configure mariadb repository key
+  apt_key: keyserver=hkp://keyserver.ubuntu.com:80 id=0xF1656F24C74CD1D8 state=present
+
+- name: add/configure mariadb repository
+  apt_repository: repo='deb [arch=amd64,i386,ppc64el] http://mirror.netinch.com/pub/mariadb/repo/{{ mariadb_version }}/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main' state=present
+
+- shell: "echo {{ item }}"
+  register: echo
+  with_items:
+    - "OS/Release: {{ ansible_distribution }}/{{ ansible_distribution_release }}"
+  changed_when: false
+
+- name: install MariaDB Server
+  package:
+    name: 'mariadb-server-{{ mariadb_version }}'
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+  register: __status_install
+
+- name: reload systemd configurtaion
+  systemd:
+      daemon_reload: yes
+
+- name: restart "{{ mariadb_service }}"
+  service: name="{{ mariadb_service }}" state=restarted enabled=yes
+  when: __status_install.changed

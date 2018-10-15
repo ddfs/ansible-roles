@@ -1,0 +1,43 @@
+---
+- name: drop test database
+  mysql_db:
+    name: test
+    state: absent
+
+- name: manage databases
+  mysql_db:
+    name: "{{ db_manage.name }}"
+    state: "{{ db_manage.state|default('present') }}"
+  with_items: "{{ mariadb_databases }}"
+  register: log_databases
+  loop_control:
+      loop_var: db_manage
+
+- name: copy init scripts to hosts
+  copy:
+    src: "{{ db_script.db_manage.init_script }}"
+    dest: "/tmp/{{ db_script.db_manage.init_script|basename }}"
+    mode: '0600'
+  with_items: "{{ log_databases.results }}"
+  when: db_script.changed and db_script.db_manage.init_script is defined and db_script.db_manage.state == 'present'
+  loop_control:
+      loop_var: db_script
+
+- name: execute init scripts
+  mysql_db:
+    name: "{{ db_exec.db_manage.name }}"
+    target: "/tmp/{{ db_exec.db_manage.init_script|basename }}"
+    state: import
+  with_items: "{{ log_databases.results }}"
+  when: db_exec.changed and db_exec.db_manage.init_script is defined and db_exec.db_manage.state == 'present'
+  loop_control:
+      loop_var: db_exec
+
+- name: clean-up init scripts
+  file:
+    name: "/tmp/{{ db_cleanup.db_manage.init_script|basename }}"
+    state: absent
+  with_items: "{{ log_databases.results }}"
+  when: db_cleanup.db_manage.init_script is defined
+  loop_control:
+      loop_var: db_cleanup

@@ -1,0 +1,8 @@
+---
+- name: restart mariadb
+  service: name="{{ mariadb_service }}" state=restarted
+  listen: "restart mariadb"
+
+- name: flush previligies
+  shell: mysqladmin flush-privileges --host={{ mariadb_host }} --port={{ mariadb_port }} --user={{ mariadb_root_user }} --password={{ mariadb_root_password }}
+  listen: "flush previligies"

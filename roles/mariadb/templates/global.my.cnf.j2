@@ -1,0 +1,13 @@
+#
+# MariaDB {{ mariadb_version }}
+#
+# {{ ansible_managed }}
+#
+{% for config_section in mariadb_configuration_merged %}
+[{{ config_section }}]
+{% for config_option in mariadb_configuration_merged[config_section] %}{% if config_option in mariadb_configuration_multiple_params_merged %}{% for config_option_val in mariadb_configuration_merged[config_section][config_option] %}{{ config_option }}={{ config_option_val }}
+{% endfor %}{% elif mariadb_configuration_merged[config_section][config_option] is not none %}{{ config_option }}={{ mariadb_configuration_merged[config_section][config_option] }}{% else %}{{ config_option }}{% endif %}
+
+{% endfor %}
+
+{% endfor %}

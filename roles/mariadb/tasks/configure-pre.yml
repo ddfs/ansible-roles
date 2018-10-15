@@ -1,0 +1,20 @@
+---
+- name: generate server-id
+  shell: hostname -I | sed -e 's/ \+\([a-z0-9]\+\:\)\+[a-z0-9]\+//' | sed -e 's/ /\n/' | grep -v '^$' | tail -1 | awk -F. '{print $3 * 256 + $4}'
+  register: generated_server_id
+  changed_when: false
+
+- set_fact:
+    mariadb_server_id: "{{ generated_server_id.stdout }}"
+
+- set_fact:
+    mariadb_configuration_merged: "{{ mariadb_configuration_defaults | combine(mariadb_configuration, recursive=True) }}"
+    mariadb_configuration_multiple_params_merged: "{{ mariadb_configuration_multiple_params_defaults + mariadb_configuration_multiple_params }}"
+
+- name: write global configuration
+  template:
+    src: global.my.cnf.j2
+    dest: "/etc/mysql/my.cnf"
+    mode: 0644
+  register: __status_config_global
+

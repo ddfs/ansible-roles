@@ -1,0 +1,4 @@
+CREATE TABLE test_table (
+    id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    date_created TIMESTAMP
+);

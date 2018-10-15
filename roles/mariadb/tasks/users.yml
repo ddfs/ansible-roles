@@ -1,0 +1,20 @@
+---
+- name: clean-up anonymous users
+  mysql_user:
+    name: ''
+    host_all: yes
+    state: absent
+
+- name: manage users
+  mysql_user:
+    name: "{{ db_user.name }}"
+    password: "{{ db_user.password|default('password') }}"
+    host: "{{ db_user.host|default('localhost') }}"
+    priv: "{{ db_user.priv|default('*.*:ALL') }}"
+    state: "{{ db_user.state|default('present') }}"
+  with_items: "{{ mariadb_users.login }}"
+  loop_control:
+      loop_var: db_user
+
+- name: flush previligies
+  shell: mysqladmin flush-privileges --user={{ mariadb_root_user }} --password={{ mariadb_root_password }}

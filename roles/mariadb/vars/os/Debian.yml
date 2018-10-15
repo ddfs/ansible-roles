@@ -1,0 +1,14 @@
+---
+mariadb_dependencies:
+  Debian:
+  - dirmngr
+  - python-mysqldb
+  - python-pip
+  - python-selinux
+  - software-properties-common
+  - mysql-common
+  - mariadb-common
+
+mariadb_pip_packages: []
+
+mariadb_service: mariadb

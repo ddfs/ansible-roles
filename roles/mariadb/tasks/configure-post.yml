@@ -1,0 +1,23 @@
+---
+- name: apply changes in debian.cnf [host]
+  replace:
+    path: '/etc/mysql/debian.cnf'
+    regexp: '^host.*=.*$'
+    replace: 'host = {{ mariadb_host }}'
+
+- name: apply changes in debian.cnf [socket]
+  replace:
+    path: '/etc/mysql/debian.cnf'
+    regexp: '^socket.*=.*$'
+    replace: 'socket = {{ mariadb_socket }}'
+
+- name: apply configuration for swappiness
+  sysctl:
+    name: vm.swappiness
+    value: "{{ mariadb_swappiness }}"
+    state: present
+  register: __status_config_swappiness
+
+- name: restart "{{ mariadb_service }}"
+  service: name="{{ mariadb_service }}" state=restarted
+  when: __status_config_global.changed or __status_config_swappiness.changed

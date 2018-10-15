@@ -1,0 +1,30 @@
+---
+- name: check root password is set (default)
+  shell: >
+    mysqladmin status --host={{ mariadb_host }} --port={{ mariadb_port }} --user={{ mariadb_root_user }} --password=
+  changed_when: false
+  failed_when: false
+  register: root_password_def
+
+- name: remove .my.cnf for root
+  file:
+    name: "/root/.my.cnf"
+    state: absent
+  when: root_password_def.rc == 0
+
+- name: set root password
+  mysql_user:
+    name: "{{ mariadb_root_user }}"
+    password: "{{ mariadb_root_password }}"
+    host_all: yes
+    state: present
+  when: root_password_def.rc == 0
+
+- name: write .my.cnf for root
+  template:
+    src: "root.my.cnf.j2"
+    dest: "/root/.my.cnf"
+    mode: 0600
+
+- name: flush previligies
+  shell: mysqladmin flush-privileges --user={{ mariadb_root_user }} --password={{ mariadb_root_password }}
