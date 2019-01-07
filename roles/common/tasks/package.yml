@@ -1,0 +1,127 @@
+---
+#
+# OS packages
+#
+# - include_role:
+#     name: common
+#     tasks_from: package
+#   vars:
+#     packages_present: dict
+#     packages_absent: dict
+#     update_cache: bool
+#     dnf_via_shell: bool
+#     print_list: bool
+#
+# packages_[present|absent]:
+#   all: []
+#   CentOS:
+#     all: []
+#     '7': []  # 'Core': []
+#     '6': []  # 'Final': []
+#   Debian:
+#     all: []
+#     NA: []  # testing
+#     stretch: []  # '9': []
+#     jessie: []  # '8': []
+#   Fedora:
+#     all:
+#     '30': []  # 'Rawhide': []
+#     '29': []  # 'Twenty Nine': []
+#     '28': []  # 'Twenty Eight': []
+#   Ubuntu:
+#     all: []
+#     bionic: []  # '18': []
+#     xenial: []  # '16': []
+#
+- name: update all packages = {{ update_all | default(false) }}
+  block:
+    - name: upgrade packages - apk
+      apk:
+        name: '*'
+        state: latest
+        update_cache: true
+      when: ansible_pkg_mgr == 'apk'
+
+    - name: upgrade packages - apt
+      apt:
+        upgrade: true
+        update_cache: true
+      when: ansible_pkg_mgr == 'apt'
+
+    - name: upgrade packages - dnf
+      dnf:
+        name: '*'
+        state: latest
+        update_cache: true
+      when: ansible_pkg_mgr == 'dnf'
+
+    - name: upgrade packages - yum
+      yum:
+        name: '*'
+        state: latest
+        update_cache: true
+      when: ansible_pkg_mgr == 'yum'
+  when: update_all | default(false)
+
+- name: prepare package list
+  set_fact:
+    print_list: "{{ print_list | default(false) }}"
+    update_cache: "{{ update_cache | default(false) }}"
+    dnf_via_shell: "{{ dnf_via_shell | default(true) }}"
+    __os_packages_present: "{{
+      ((
+        (packages_present['all'] | default([])) +
+        (packages_present[ansible_distribution]['all'] | default([])) +
+        (packages_present[ansible_distribution][ansible_distribution_release] | default([])) +
+        (packages_present[ansible_distribution][ansible_distribution_major_version] | default([]))
+          if ansible_distribution in packages_present else (packages_present['all']) | default([])
+      )  if packages_present is defined else []) | unique | sort
+    }}"
+    __os_packages_absent: "{{
+      ((
+        (packages_absent['all'] | default([])) +
+        (packages_absent[ansible_distribution]['all'] | default([])) +
+        (packages_absent[ansible_distribution][ansible_distribution_release] | default([])) +
+        (packages_absent[ansible_distribution][ansible_distribution_major_version] | default([]))
+          if ansible_distribution in packages_absent else (packages_absent['all']) | default([])
+      ) if packages_absent is defined else []) | unique | sort
+    }}"
+
+- block:
+    - name: os packages to be removed
+      debug: msg="{{ __os_packages_absent }}"
+      when: print_list
+
+    - name: remove os packages
+      package:
+        name: "{{ __os_packages_absent }}"
+        state: absent
+      when: not ansible_pkg_mgr == 'dnf' or (ansible_pkg_mgr == 'dnf' and not dnf_via_shell)
+
+    - name: remove os packages (dnf_via_shell)
+      shell: >
+        dnf --assumeyes remove {{ __os_packages_absent | join(' ')}}
+      args:
+        warn: false
+      when: ansible_pkg_mgr == 'dnf' and dnf_via_shell
+  when: __os_packages_absent | length > 0
+
+- block:
+    - name: os packages to be installed
+      debug: msg="{{ __os_packages_present }}"
+      when: print_list
+
+    - name: install os packages
+      package:
+        name: "{{ __os_packages_present }}"
+        state: present
+        update_cache: "{{ update_cache }}"
+      when: not ansible_pkg_mgr == 'dnf' or (ansible_pkg_mgr == 'dnf' and not dnf_via_shell)
+
+    - name: install os packages (dnf_via_shell)
+      shell: >
+        dnf --assumeyes install {{ __os_packages_present | join(' ')}}
+      args:
+        warn: false
+      when: ansible_pkg_mgr == 'dnf' and dnf_via_shell
+  when: __os_packages_present | length > 0

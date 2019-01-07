@@ -1,11 +1,6 @@
 ---
-apr_dependencies:
-  Debian:
-  # essentials
-  - aptitude
-  - autoconf
-  - automake
-  - autotools-dev
-  - build-essential
-  - libtool
-  - libtool-bin
+os_bin_path: '/usr/local/bin'
+os_lib_path: '/usr/local/lib'
+
+ldconfig_cache_path: '/etc/ld.so.cache'
+ldconfig_config_path: '/etc/ld.so.conf.d'

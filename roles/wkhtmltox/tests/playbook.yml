@@ -1,0 +1,7 @@
+---
+- hosts: all
+  roles:
+  - role: wkhtmltox
+    # package: deb | tgz
+    wkhtmltox_package_type: "deb"
+    wkhtmltox_force_purge: true

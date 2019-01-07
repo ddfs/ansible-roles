@@ -1,0 +1,14 @@
+---
+apr_source_name: "apr"
+apr_source_version: "1.6.5"
+
+apr_source_name_full: "{{ apr_source_name }}-{{ apr_source_version }}"
+apr_source_name_tar: "{{ apr_source_name_full }}.tar.gz"
+
+apr_source_src: "http://www-eu.apache.org/dist/apr/{{ apr_source_name_tar }}"
+apr_source_tgz: "/tmp/{{ apr_source_name_tar }}"
+apr_source_dir: "/tmp/{{ apr_source_name }}"
+
+apr_target_dir: "/opt/{{ apr_source_name }}"
+apr_target_exec: "{{ apr_target_dir }}/bin/apr-1-config"
+apr_target_exec_version: "{{ apr_target_exec }} --version"

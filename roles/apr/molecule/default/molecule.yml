@@ -1,0 +1,69 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+lint:
+  name: yamllint
+  options:
+    config-file: ../molecule/default/.yamllint
+platforms:
+  - name: centos-7
+    image: centos:7
+  - name: centos-6
+    image: centos:6
+  - name: debian-buster
+    image: debian:buster
+  - name: debian-stretch
+    image: debian:stretch
+  - name: debian-jessie
+    image: debian:jessie
+  - name: debian-wheezy
+    image: debian:wheezy
+  - name: fedora-30
+    image: fedora:30
+  - name: fedora-29
+    image: fedora:29
+  - name: fedora-28
+    image: fedora:28
+  - name: fedora-27
+    image: fedora:27
+  - name: fedora-26
+    image: fedora:26
+  - name: fedora-25
+    image: fedora:25
+  - name: ubuntu-bionic
+    image: ubuntu:bionic
+  - name: ubuntu-xenial
+    image: ubuntu:xenial
+  - name: ubuntu-trusty
+    image: ubuntu:trusty
+  - name: ubuntu-precise
+    image: ubuntu:precise
+provisioner:
+  name: ansible
+  config_file: /etc/ansible/ansible.cfg
+  inventory:
+    host_vars:
+      fedora-30:
+        ansible_python_interpreter: /usr/bin/python3
+      fedora-29:
+        ansible_python_interpreter: /usr/bin/python3
+      fedora-28:
+        ansible_python_interpreter: /usr/bin/python3
+      fedora-27:
+        ansible_python_interpreter: /usr/bin/python3
+      fedora-26:
+        ansible_python_interpreter: /usr/bin/python3
+      fedora-25:
+        ansible_python_interpreter: /usr/bin/python3
+  lint:
+    name: ansible-lint
+    options:
+      x: [ "ANSIBLE0010", "ANSIBLE0013"]
+scenario:
+  name: default
+verifier:
+  name: testinfra
+  lint:
+    name: flake8

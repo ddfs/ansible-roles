@@ -1,0 +1,36 @@
+---
+- name: compare version with current one
+  set_fact:
+    __install: "{% if __current is failed %}false{% elif __current.stdout == 'NaN' %}true{% else
+      %}{{ __current.stdout is version(wkhtmltox_deb_version, '<', strict=true) }}{% endif %}"
+
+- set_fact:
+    __install: true
+  when: wkhtmltox_force_purge
+
+- name: purge current installation packages (apt)...
+  apt:
+    name: "{{ wkhtmltox_deb_name }}"
+    state: absent
+    cache_valid_time: 3600
+    purge: true
+  when: __install
+
+- name: purge current installation packages (deb)...
+  shell: >
+    dpkg --purge {{ wkhtmltox_deb_name }}
+  when: __install
+
+- name: purge current installation packages (tar)
+  file:
+    dest: "{{ wkhtmltox_tgz_dir }}"
+    state: absent
+  when: __install
+
+- name: install wkhtmltox
+  apt:
+    deb: "{{ wkhtmltox_deb_url }}"
+    force: true
+    update_cache: true
+    state: present
+  when: __install

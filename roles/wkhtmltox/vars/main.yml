@@ -1,0 +1,9 @@
+---
+cmd_wkhtmltox_version: >
+  [ -x {{ wkhtmltox_exec }} ] && {{ wkhtmltox_exec }} --version | head -2 | tail -1 | awk '/ / { print $2 }' |
+  sed -e 's/\"//g' || echo NaN
+
+# dependencies
+wkhtmltopdf_dependencies:
+  Debian:
+    - dpkg

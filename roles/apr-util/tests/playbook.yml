@@ -1,0 +1,10 @@
+---
+- hosts: all
+  roles:
+  - role: apr-util
+    source_apr_version: 1.6.5
+    source_apr_iconv_version: 1.2.2
+    source_apr_util_version: 1.6.1
+    apr_force_compile: false
+    apr_iconv_force_compile: false
+    apr_util_force_compile: false

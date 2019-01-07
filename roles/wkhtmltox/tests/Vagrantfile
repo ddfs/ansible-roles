@@ -1,0 +1,87 @@
+# -*- mode: ruby -*-
+Vagrant.configure('2') do |config|
+  vm_cpu = 1
+  vm_mem = 768
+  vm_ip = "192.168.88.50"
+  vm_nic_type = "Am79C970A"
+
+  # vm_box = "centos/7"
+  # vm_box = "centos/6"
+
+  vm_box = "debian/stretch64"
+  # vm_box = "debian/jessie64"
+  # vm_box = "debian/wheezy64"
+
+  # vm_box = "fedora/29-cloud-base"
+  # vm_box = "fedora/28-cloud-base"
+  # vm_box = "fedora/27-cloud-base"
+  # vm_box = "fedora/26-cloud-base"
+  # vm_box = "fedora/25-cloud-base"
+  # vm_box = "fedora/24-cloud-base"
+
+  # vm_box = "generic/fedora29"
+  # vm_box = "generic/fedora28"
+  # vm_box = "generic/fedora27"
+  # vm_box = "generic/fedora26"
+  # vm_box = "generic/fedora25"
+
+  # vm_box = "ubuntu/bionic64"
+  # vm_box = "ubuntu/xenial64"
+  # vm_box = "ubuntu/trusty64"
+
+  # ssh
+  config.ssh.insert_key = false
+  config.ssh.private_key_path = '~/.vagrant.d/insecure_private_key'
+
+  # print something random
+  puts "Refresh: %d" % rand(1...100)
+
+  config.vm.define 'ansible-vm-50' do |node|
+    node.vm.box = vm_box
+    node.vm.network :private_network, ip: vm_ip, nic_type: vm_nic_type
+    # node.vm.hostname = 'ansible-vm-50'    
+  end
+
+  # virtualbox
+  config.vm.provider "virtualbox" do |virtualbox|
+    virtualbox.name = "ansible-vm-50"
+    virtualbox.cpus = "#{vm_cpu}"
+    virtualbox.memory = "#{vm_mem}"
+    virtualbox.default_nic_type = vm_nic_type
+    virtualbox.customize ["modifyvm", :id, "--cpuexecutioncap", "80"]
+    virtualbox.customize ["modifyvm", :id, "--audio", "none"]
+    virtualbox.customize ["modifyvm", :id, "--vram", "16"]
+    virtualbox.customize ["modifyvm", :id, "--nictype1", vm_nic_type]
+    virtualbox.customize ["modifyvm", :id, "--nictype2", vm_nic_type]
+  end
+
+  # ansible: prepare host
+  config.vm.provision 'shell',
+    privileged: true,
+    inline: "if [[ ! -f /ansible.ready ]]; then \
+    if [ $(command -v apt-get) ]; then apt-get update && apt-get install -y python ca-certificates && apt-get clean; \
+    elif [ $(command -v dnf) ]; then dnf makecache && dnf --assumeyes install python python-devel python-dnf && dnf clean all; \
+    elif [ $(command -v yum) ]; then yum makecache fast && yum install -y epel-release && yum install -y python python-pip python-setuptools python-wheel && yum clean all; \
+    elif [ $(command -v zypper) ]; then zypper refresh && zypper install -y python python-xml && zypper clean -a; \
+    elif [ $(command -v apk) ]; then apk update && apk add --no-cache python ca-certificates; \
+    elif [ $(command -v xbps-install) ]; then xbps-install -Syu && xbps-install -y python ca-certificates && xbps-remove -O; fi; \
+    sudo touch /ansible.ready; else echo OK; fi;
+    "
+
+  # ansible: set "ansible_python_interpreter" to "/usr/bin/python3" on fedora
+  config.vm.provision 'ansible' do |ansible|
+    ansible.inventory_path = 'inventory.yml'
+    ansible.playbook = 'playbook.yml'
+    ansible.limit = "all"
+    ansible.verbose = ""
+    ansible.become = true
+    ansible.compatibility_mode = "2.0"
+    ansible.host_key_checking = false
+    ansible.extra_vars = {
+      ansible_python_interpreter: "/usr/bin/python"
+    }
+    ansible.raw_arguments = [
+      "--flush-cache"
+    ]
+  end
+end

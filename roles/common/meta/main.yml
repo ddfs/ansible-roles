@@ -1,10 +1,10 @@
 ---
 galaxy_info:
   author: Fatih Piristine
-  description: Ansible role to install wkhtmltox
+  description: Common tasks used among roles.
   company: Hexon
   license: Apache
-  min_ansible_version: 2.5
+  min_ansible_version: 2.7
   platforms:
     - name: EL
       versions:
@@ -40,6 +40,6 @@ galaxy_info:
       versions:
         - all
   categories:
-    - cloud
-    - web
+    - common
+    - library
 dependencies: []

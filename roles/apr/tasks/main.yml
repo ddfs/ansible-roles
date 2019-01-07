@@ -1,83 +1,129 @@
 ---
-- include_vars: roles/shared/vars/sources/apr.yml
+- name: host > os family - distro - release - version
+  command: >
+    echo "{{ item }}"
+  with_items:
+    - "{{ ansible_os_family }} - {{ ansible_distribution }} - {{
+      ansible_distribution_release }} - {{ ansible_distribution_major_version }}"
+  changed_when: false
 
-- name: include os based configuration
-  include_vars: "os/{{ ansible_os_family }}.yml"
+- name: run compatibility tests
+  include_tasks: "compat.yml"
+
+- name: include source vars
+  include_vars: "source.yml"
+
+- name: include os vars
+  include_vars: "os/{{ ansible_distribution }}.yml"
 
 - name: check current installation
-  register: __app_current
+  register: __current_apr
   shell: >
-    [ -x {{ target_apr_exec }} ] && {{ target_apr_exec_version }} 2>&1 | sed 's/[a-zA-Z\-\:_/\(\)]*[[:space:]]*//g' | sed 's/^ *//;s/ *$//' || echo 'Install'
-  become: yes
+    {{ cmd_apr_version }}
   changed_when: false
 
 - name: compare version with current one
   set_fact:
-    __app_install: "{% if __app_current is failed %}False{% elif __app_current.stdout == 'Install' %}True{% else %}False{% endif %}"
-    __app_upgrade: "{% if __app_current is failed %}False{% elif __app_current.stdout == 'Install' %}False{% else %}{{ __app_current.stdout is version(source_apr_version, '<', strict=True) }}{% endif %}"
+    __install_apr: "{% if __current_apr is failed %}false{% elif __current_apr.stdout == 'NaN' %}true{%
+      else %}false{% endif %}"
+    __upgrade_apr: "{% if __current_apr is failed %}false{% elif __current_apr.stdout == 'NaN' %}false{%
+      else %}{{ __current_apr.stdout is version(apr_source_version, '<', strict=true) }}{% endif %}"
 
 - name: force compile = {{ apr_force_compile }}
   set_fact:
-    __app_install: True
-    __app_upgrade: True
+    __install_apr: true
+    __upgrade_apr: true
   when: apr_force_compile
 
-- name: install dependency packages...
-  package:
-    name: "{{ item }}"
-    state: present
-    update_cache: yes
-    cache_valid_time: 3600
-  with_items: "{{ apr_dependencies[ansible_distribution] }}"
-  become: yes
-  when: __app_install or __app_upgrade
+- block:
+    - include_role:
+        name: common
+        tasks_from: package
+      vars:
+        packages_present: "{{ os_packages_present }}"
+        packages_absent: "{{ os_packages_absent }}"
+        update_cache: true
+        dnf_via_shell: true
+        print_list: true
 
-- include: roles/shared/tasks/sources/url-tgz.yml
-  vars:
-    source: "{{ source_apr_name }}"
-    source_src: "{{ source_apr_src }}"
-    source_tgz: "{{ source_apr_tgz }}"
-    source_dir: "{{ source_apr_dir }}"
-  when: __app_install or __app_upgrade
+    # apr
+    - include_role:
+        name: common
+        tasks_from: url-tgz
+      vars:
+        source: "{{ apr_source_name }}"
+        source_src: "{{ apr_source_src }}"
+        source_tgz: "{{ apr_source_tgz }}"
+        source_dir: "{{ apr_source_dir }}"
 
-- name: buildconf
-  command: >
-    ./buildconf
-  args:
-    chdir: "{{ source_apr_dir }}"
-  when: __app_install or __app_upgrade
+    - name: buildconf
+      command: >
+        ./buildconf
+      args:
+        chdir: "{{ apr_source_dir }}"
 
-- name: configure
-  command: >
-    ./configure \
-      --prefix="{{ target_apr_dir }}" \
-      --exec-prefix="{{ target_apr_dir }}"
-  args:
-    chdir: "{{ source_apr_dir }}"
-  when: __app_install or __app_upgrade
+    - name: configure
+      command: >
+        ./configure \
+          --prefix="{{ apr_target_dir }}" \
+          --exec-prefix="{{ apr_target_dir }}"
+      args:
+        chdir: "{{ apr_source_dir }}"
 
-- name: compile
-  make:
-    chdir: "{{ source_apr_dir }}"
-  when: __app_install or __app_upgrade
+    - name: compile
+      make:
+        chdir: "{{ apr_source_dir }}"
 
-- name: install
-  make:
-    chdir: "{{ source_apr_dir }}"
-    target: install
-  become: yes
-  when: __app_install or __app_upgrade
+    - name: install
+      make:
+        chdir: "{{ apr_source_dir }}"
+        target: install
+
+    # shell only
+    - name: linkig bin, lib
+      shell: >
+        ln -sf {{ apr_target_dir }}/bin/apr-1-config -T {{ os_bin_path }}/apr-1-config;
+      args:
+        warn: false
+
+    - name: configure ldconfig file
+      template:
+        src: apr.j2
+        dest: "{{ ldconfig_config_path }}/apr.conf"
+        mode: 0644
+        owner: root
+        group: root
+
+    - name: rebuild ldconfig cache
+      shell: >
+        rm -rf {{ ldconfig_cache_path }}; ldconfig
+      args:
+        warn: false
+  when: __install_apr or __upgrade_apr
 
 - name: clean-up
   file:
     path: "{{ item }}"
     state: absent
   with_items:
-    - "{{ source_apr_dir }}"
-  become: yes
+    - "{{ apr_source_dir }}"
 
-- shell: "echo {{ item }}"
-  register: echo
+- name: validate version
+  register: __validate_apr_version
+  shell: >
+    {{ cmd_apr_version }}
+  changed_when: false
+
+- name: validate libs
+  register: __validate_apr_libs
+  shell: >
+    ldconfig -p | grep apr
+  changed_when: false
+
+- name: results
+  command: >
+    echo "{{ item }}"
   with_items:
-    - "{{ target_apr_exec }} version is {{ source_apr_version }}"
+    - "{{ apr_target_exec }} version is {{ __validate_apr_version.stdout }}"
+    - "{{ __validate_apr_libs.stdout }}"
   changed_when: false

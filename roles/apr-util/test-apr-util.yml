@@ -1,7 +1,0 @@
----
-- hosts: apr
-  roles:
-  - role: apr-util
-    source_apr_version: 1.6.3
-    source_apr_iconv_version: 1.2.2
-    source_apr_util_version: 1.6.1

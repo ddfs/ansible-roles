@@ -1,0 +1,69 @@
+---
+#
+# Download source files packaged as tarballs from given urls.
+#
+# - name: include vars from a role
+#   include_role:
+#     name: "{{ __shared_item.role }}"
+#     vars_from: "{{ __shared_item.vars }}"
+#     public: true
+#   with_items:
+#   - {role: apr, vars: source}
+#   loop_control:
+#     loop_var: __shared_item
+#
+#
+# - name: include roles from common
+#   include_role:
+#     name: common
+#     tasks_from: url-tgz
+#   vars:
+#     source: name
+#     source_src: "{{ source_name_src }}"
+#     source_tgz: "{{ source_name_tgz }}"
+#     source_dir: "{{ source_name_dir }}"
+#
+
+- name: destroy {{ source }} source directory
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ source_dir }}"
+  become: true
+
+- name: create {{ source }} source directory
+  file:
+    path: "{{ item }}"
+    mode: 0755
+    state: directory
+  with_items:
+    - "{{ source_dir }}"
+
+- name: download {{ source }} source package
+  get_url:
+    url: "{{ source_src }}"
+    dest: "{{ source_tgz }}"
+
+- name: unpack {{ source }} source package
+  unarchive:
+    src: "{{ source_tgz }}"
+    dest: "{{ source_dir }}"
+    remote_src: true
+    extra_opts: [--strip-components=1]
+
+- name: fix permissions for {{ source }} source files
+  file:
+    dest: "{{ source_dir }}"
+    owner: root
+    group: root
+    recurse: true
+  become: true
+
+- name: delete {{ source }} source package
+  file:
+    path: "{{ source_tgz }}"
+    state: absent
+  with_items:
+    - "{{ source_dir }}"
+  become: true

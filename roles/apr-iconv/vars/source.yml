@@ -1,0 +1,14 @@
+---
+apr_iconv_source_name: "apr-iconv"
+apr_iconv_source_version: "1.2.2"
+
+apr_iconv_source_name_full: "{{ apr_iconv_source_name }}-{{ apr_iconv_source_version }}"
+apr_iconv_source_name_tar: "{{ apr_iconv_source_name_full }}.tar.gz"
+
+apr_iconv_source_src: "http://www-eu.apache.org/dist/apr/{{ apr_iconv_source_name_tar }}"
+apr_iconv_source_tgz: "/tmp/{{ apr_iconv_source_name_tar }}"
+apr_iconv_source_dir: "/tmp/{{ apr_iconv_source_name }}"
+
+apr_iconv_target_dir: "/opt/{{ apr_iconv_source_name }}"
+apr_iconv_target_exec: "{{ apr_iconv_target_dir }}/bin/apriconv"
+apr_iconv_target_exec_version: "{{ apr_iconv_target_exec }} -v"

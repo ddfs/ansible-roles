@@ -1,6 +1,0 @@
----
-- hosts: apr
-  roles:
-  - role: apr-iconv
-    source_apr_version: 1.6.3
-    source_apr_iconv_version: 1.2.2

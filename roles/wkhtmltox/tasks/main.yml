@@ -1,25 +1,43 @@
 ---
-- name: include os based configuration
-  include_vars: "os/{{ ansible_os_family }}.yml"
+- name: host > os family - distro - release - version
+  command: >
+    echo "{{ item }}"
+  with_items:
+    - "{{ ansible_os_family }} - {{ ansible_distribution }} - {{
+      ansible_distribution_release }} - {{ ansible_distribution_major_version }}"
+  changed_when: false
 
 - name: determine executable path
   command: which wkhtmltopdf
-  register: __app_exec
+  register: __executable
   changed_when: false
   failed_when: false
 
 - set_fact:
-    wkhtmltox_exec: "{{ __app_exec.stdout }}"
-  when: __app_exec.rc == 0
+    wkhtmltox_exec: "{{ __executable.stdout }}"
+  when: __executable.rc == 0
 
 - name: check current installation
-  register: __app_current
+  register: __current
   shell: >
-    [ -x {{ wkhtmltox_exec }} ] && {{ wkhtmltox_exec }} --version | head -2 | tail -1 | awk '/ / { print $2 }' | sed -e 's/\"//g' || echo 'Install'
+    {{ cmd_wkhtmltox_version }}
   changed_when: false
 
-- include_tasks: dpkg.yml
-  when: wkhtmltox_package_type == 'dpkg'
+- include_tasks: deb.yml
+  when: wkhtmltox_package_type == 'deb'
 
-- include_tasks: tar.yml
-  when: wkhtmltox_package_type == 'tar'
+- include_tasks: tgz.yml
+  when: wkhtmltox_package_type == 'tgz'
+
+- name: validate installation
+  register: __validate
+  shell: >
+    {{ cmd_wkhtmltox_version }}
+  changed_when: false
+
+- name: results
+  command: >
+    echo "{{ item }}"
+  with_items:
+    - "wkhtmltopdf version is {{ __validate.stdout }}"
+  changed_when: false

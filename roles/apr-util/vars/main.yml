@@ -1,0 +1,70 @@
+---
+cmd_apr_util_version: >
+  [ -x {{ apr_util_target_exec }} ] && {{ apr_util_target_exec_version }} 2>&1 |
+  sed 's/[a-zA-Z\-\:_/\(\)]*[[:space:]]*//g' | sed 's/^ *//;s/ *$//' || echo 'NaN'
+
+os_packages_present:
+  all:
+    - autoconf
+    - automake
+    - libtool
+    - make
+
+  CentOS:
+    all:
+      - openssl-devel
+      - sqlite-devel
+      - expat-devel
+      - libxml2-devel
+      - openldap-devel
+    '7':
+      - libdb-devel
+    '6':
+      - db4-devel
+
+  Debian:
+    all:
+      - autotools-dev
+      - build-essential
+      - libldap2-dev
+      - libssl-dev
+      - libsqlite3-dev
+      - libdb-dev
+      - libexpat-dev
+      - libxml2-dev
+    NA:  # testing
+      - libtool-bin
+    stretch:
+      - libtool-bin
+    jessie:
+      - libtool-bin
+
+  Fedora:
+    all:
+      - "@development-tools"
+      - annobin
+      - binutils
+      - openssl-devel
+      - sqlite-devel
+      - expat-devel
+      - libxml2-devel
+      - openldap-devel
+      - libdb-devel
+
+  Ubuntu:
+    all:
+      - autotools-dev
+      - build-essential
+      - libldap2-dev
+      - libssl-dev
+      - libsqlite3-dev
+      - libdb-dev
+      - libexpat-dev
+      - libxml2-dev
+    bionic:
+      - libtool-bin
+    xenial:
+      - libtool-bin
+
+os_packages_absent:
+  all: []

@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  roles:
+    - role: apr
+      source_apr_version: 1.6.5
+      apr_force_compile: false

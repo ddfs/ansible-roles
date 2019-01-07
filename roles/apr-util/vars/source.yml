@@ -1,0 +1,14 @@
+---
+apr_util_source_name: "apr-util"
+apr_util_source_version: "1.6.1"
+
+apr_util_source_name_full: "{{ apr_util_source_name }}-{{ apr_util_source_version }}"
+apr_util_source_name_tar: "{{ apr_util_source_name_full }}.tar.gz"
+
+apr_util_source_src: "http://www-eu.apache.org/dist/apr/{{ apr_util_source_name_tar }}"
+apr_util_source_tgz: "/tmp/{{ apr_util_source_name_tar }}"
+apr_util_source_dir: "/tmp/{{ apr_util_source_name }}"
+
+apr_util_target_dir: "/opt/{{ apr_util_source_name }}"
+apr_util_target_exec: "{{ apr_util_target_dir }}/bin/apu-1-config"
+apr_util_target_exec_version: "{{ apr_util_target_exec }} --version"

@@ -1,6 +1,0 @@
----
-# default dependencies
-# deb depencies will be extracted from .deb itself.
-wkhtmltopdf_dependencies:
-  Debian:
-  - dpkg

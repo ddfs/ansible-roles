@@ -1,0 +1,77 @@
+---
+#
+# PIP packages
+#
+# - include_role:
+#     name: common
+#     tasks_from: pip
+#   vars:
+#     packages_present: dict
+#     packages_absent: dict
+#     print_list: bool
+#
+# packages_[present|absent]:
+#   all: []
+#   CentOS:
+#     all: []
+#     '7': []  # 'Core': []
+#     '6': []  # 'Final': []
+#   Debian:
+#     all: []
+#     NA: []  # testing
+#     stretch: []  # '9': []
+#     jessie: []  # '8': []
+#   Fedora:
+#     all:
+#     '30': []  # 'Rawhide': []
+#     '29': []  # 'Twenty Nine': []
+#     '28': []  # 'Twenty Eight': []
+#   Ubuntu:
+#     all: []
+#     bionic: []  # '18': []
+#     xenial: []  # '16': []
+#
+
+- name: prepare package list
+  set_fact:
+    print_list: "{{ print_list | default(false) }}"
+    __pip_packages_present: "{{
+      ((
+        (packages_present['all'] | default([])) +
+        (packages_present[ansible_distribution]['all'] | default([])) +
+        (packages_present[ansible_distribution][ansible_distribution_release] | default([])) +
+        (packages_present[ansible_distribution][ansible_distribution_major_version] | default([]))
+          if ansible_distribution in packages_present else (packages_present['all']) | default([])
+      ) if packages_present is defined else []) | unique | sort
+    }}"
+    __pip_packages_absent: "{{
+      ((
+        (packages_absent['all'] | default([])) +
+        (packages_absent[ansible_distribution]['all'] | default([])) +
+        (packages_absent[ansible_distribution][ansible_distribution_release] | default([])) +
+        (packages_absent[ansible_distribution][ansible_distribution_major_version] | default([]))
+          if ansible_distribution in packages_absent else (packages_absent['all']) | default([])
+      ) if packages_absent is defined else []) | unique | sort
+    }}"
+
+- block:
+    - name: pip packages to be removed
+      debug: msg="{{ __pip_packages_absent }}"
+      when: print_list
+
+    - name: remove pip packages
+      pip:
+        name: "{{ __pip_packages_absent }}"
+        state: absent
+  when: __pip_packages_absent | length > 0
+
+- block:
+    - name: pip packages to be installed
+      debug: msg="{{ __pip_packages_present }}"
+      when: print_list
+
+    - name: install pip packages
+      pip:
+        name: "{{ __pip_packages_present }}"
+        state: present
+  when: __pip_packages_present | length > 0

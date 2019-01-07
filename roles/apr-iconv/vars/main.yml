@@ -1,0 +1,54 @@
+---
+cmd_apr_iconv_version: >
+  [ -x {{ apr_iconv_target_exec }} ] && {{ apr_iconv_target_exec_version }} 2>&1 |
+  sed 's/[a-zA-Z\-\:_/\(\)]-*[[:space:]]*//g' | sed 's/^ *//;s/ *$//' || echo NaN
+
+os_packages_present:
+  all:
+    - autoconf
+    - automake
+    - libtool
+    - make
+
+  CentOS:
+    all: []
+
+  Debian:
+    all:
+      - autotools-dev
+      - build-essential
+    NA:  # testing
+      - libtool-bin
+    stretch:
+      - libtool-bin
+    jessie:
+      - libtool-bin
+
+  Fedora:
+    all:
+      - "@development-tools"
+      - binutils
+      - libselinux-python
+      - python
+      - python-devel
+      - redhat-rpm-config
+    '30':
+      - annobin
+    '29':
+      - annobin
+    '28':
+      - annobin
+    '27':
+      - annobin
+
+  Ubuntu:
+    all:
+      - autotools-dev
+      - build-essential
+    bionic:
+      - libtool-bin
+    xenial:
+      - libtool-bin
+
+os_packages_absent:
+  all: []

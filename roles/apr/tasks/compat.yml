@@ -1,0 +1,28 @@
+---
+- block:
+    - name: test if version is at least CentOS 6
+      fail:
+        msg: "This role not compatible with this system"
+      when: ansible_distribution_major_version is version(6, '<')
+  when: ansible_distribution == 'CentOS'
+
+- block:
+    - name: test if version is at least Debian 7
+      fail:
+        msg: "This role not compatible with this system"
+      when: ansible_distribution_major_version is version(7, '<')
+  when: ansible_distribution == 'Debian'
+
+- block:
+    - name: test if version is at least Fedora 25
+      fail:
+        msg: "This role not compatible with this system"
+      when: ansible_distribution_major_version is version(25, '<')
+  when: ansible_distribution == 'Fedora'
+
+- block:
+    - name: test if version is at least Ubuntu 12
+      fail:
+        msg: "This role not compatible with this system"
+      when: ansible_distribution_major_version is version(12, '<')
+  when: ansible_distribution == 'Ubuntu'
