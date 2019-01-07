@@ -11,7 +11,7 @@ each role has same host configuration file to start with.
 
 mariadb
 -------
-'configure first' and install to mariadb server 10.x. 
+'configure first' and install mariadb server 10.x. 
 
 nodejs
 ------
