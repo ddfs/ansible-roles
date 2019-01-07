@@ -5,10 +5,6 @@ ansible-roles
 -----------
 avoid host key checking on test machines.
 
-Vagrantfile
------------
-fires up three vmachines used in testing.
-
 roles
 ======
 each role has same host configuration file to start with.
